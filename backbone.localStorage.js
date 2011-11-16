@@ -71,9 +71,17 @@ _.extend(Store.prototype, {
 
 });
 
+var defaultSync;
 // Override `Backbone.sync` to use delegate to the model or collection's
 // *localStorage* property, which should be an instance of `Store`.
 Backbone.sync = function(method, model, options, error) {
+
+  try {
+    var store = model.localStorage || model.collection.localStorage;
+	if (!store) throw "No local storage. Reverting to default sync";
+  } catch (e) {
+    return defaultSync.apply(this, arguments);
+  }
 
   // Backwards compatibility with Backbone <= 0.3.3
   if (typeof options == 'function') {
@@ -84,7 +92,6 @@ Backbone.sync = function(method, model, options, error) {
   }
 
   var resp;
-  var store = model.localStorage || model.collection.localStorage;
 
   switch (method) {
     case "read":    resp = model.id ? store.find(model) : store.findAll(); break;
